@@ -20,6 +20,20 @@ GOARCH_arm64 := arm64
 GOARCH_x86_64 := amd64
 GOOS_macosx := darwin
 GOOS_iphoneos := ios
+GOOS_iphonesimulator := ios
+
+# Explicit clang targets so every object carries the right LC platform tag;
+# otherwise cgo objects default to the host (macOS) and the resulting archive
+# cannot be assembled into an iOS xcframework.
+ifeq ($(PLATFORM_NAME),iphoneos)
+CLANG_TARGET := $(firstword $(ARCHS))-apple-ios13.0
+else ifeq ($(PLATFORM_NAME),iphonesimulator)
+CLANG_TARGET := $(firstword $(ARCHS))-apple-ios13.0-simulator
+else
+CLANG_TARGET := $(firstword $(ARCHS))-apple-macos10.15
+endif
+export CC ?= clang
+export CGO_CC := clang -target $(CLANG_TARGET)
 
 build: $(DESTDIR)/libwg-go.a
 version-header: $(DESTDIR)/wireguard-go-version.h
